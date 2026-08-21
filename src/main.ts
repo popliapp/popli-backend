@@ -51,7 +51,7 @@ async function bootstrap() {
   );
 
   app.use(
-    '/admin/withdrawals/payout-webhook',
+    '/admin/withdrawals/cashfree-webhook',
     require('express').raw({
       type: 'application/json',
     }),
