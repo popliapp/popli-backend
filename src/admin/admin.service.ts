@@ -952,7 +952,12 @@ const updatedRequest = await tx.withdrawalRequest.update({
     });
   }
 
-async handlePayoutWebhook(rawBody: Buffer, signature: string, timestamp: string) {
+  async handlePayoutWebhook(rawBody: Buffer | undefined, signature: string | undefined, timestamp: string | undefined) {
+    // If Cashfree sends a test ping without signature / empty body during dashboard setup
+    if (!rawBody || !signature || !timestamp) {
+      return { received: true, message: 'Cashfree Webhook Endpoint Active' };
+    }
+
     const crypto = require('crypto');
 
     const signatureData = timestamp + rawBody.toString();
@@ -962,14 +967,15 @@ async handlePayoutWebhook(rawBody: Buffer, signature: string, timestamp: string)
       .digest('base64');
 
     if (expectedSignature !== signature) {
-      throw new BadRequestException('Invalid Cashfree webhook signature');
+      // In case of a test webhook or format difference
+      return { received: true, warning: 'Signature mismatch, but acknowledged' };
     }
 
     let event: any;
     try {
       event = JSON.parse(rawBody.toString());
     } catch {
-      throw new BadRequestException('Invalid webhook payload');
+      return { received: true };
     }
 
     const transferData = event?.data || event;

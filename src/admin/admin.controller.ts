@@ -198,13 +198,16 @@ export class AdminController {
   }
 
   @Post('withdrawals/cashfree-webhook')
+  @Post('withdrawals/payout-webhook')
+  @Get('withdrawals/cashfree-webhook')
+  @Get('withdrawals/payout-webhook')
   @ApiOperation({ summary: 'Cashfree payout webhook — verified by signature + timestamp' })
   handlePayoutWebhook(
     @Req() req: RawBodyRequest<Request>,
-    @Headers('x-webhook-signature') signature: string,
-    @Headers('x-webhook-timestamp') timestamp: string,
+    @Headers('x-webhook-signature') signature?: string,
+    @Headers('x-webhook-timestamp') timestamp?: string,
   ) {
-    return this.adminService.handlePayoutWebhook(req.rawBody!, signature, timestamp);
+    return this.adminService.handlePayoutWebhook(req.rawBody, signature, timestamp);
   }
 
   @Get('payment-process')

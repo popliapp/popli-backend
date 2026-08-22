@@ -57,6 +57,13 @@ async function bootstrap() {
     }),
   );
 
+  app.use(
+    '/admin/withdrawals/payout-webhook',
+    require('express').raw({
+      type: 'application/json',
+    }),
+  );
+
   app.enableCors({
     origin: true,
     methods: [
