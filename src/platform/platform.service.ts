@@ -55,49 +55,47 @@ export class PlatformService {
       this.prisma.systemConfig.findUnique({ where: { key: 'PLATFORM_FEE_PERCENTAGE' } }),
     ]);
 
-    if (!minRow || typeof minRow.valueJson !== 'number') {
-      throw new Error('Platform configuration MIN_WITHDRAWAL_INR is not set. Contact support.');
-    }
-    if (!tdsRow || typeof tdsRow.valueJson !== 'number') {
-      throw new Error('Platform configuration TDS_PERCENTAGE is not set. Contact support.');
-    }
-    if (!feeRow || typeof feeRow.valueJson !== 'number') {
-      throw new Error('Platform configuration PLATFORM_FEE_PERCENTAGE is not set. Contact support.');
-    }
+    const minWithdrawalInr = typeof minRow?.valueJson === 'number' ? minRow.valueJson : 100;
+    const tdsPercentage = typeof tdsRow?.valueJson === 'number' ? tdsRow.valueJson : 10;
+    const platformFeePercentage = typeof feeRow?.valueJson === 'number' ? feeRow.valueJson : 5;
+
+    // Auto-seed missing keys
+    if (!minRow) await this.upsertConfig('MIN_WITHDRAWAL_INR', minWithdrawalInr);
+    if (!tdsRow) await this.upsertConfig('TDS_PERCENTAGE', tdsPercentage);
+    if (!feeRow) await this.upsertConfig('PLATFORM_FEE_PERCENTAGE', platformFeePercentage);
 
     return {
-      minWithdrawalInr: minRow.valueJson,
-      tdsPercentage: tdsRow.valueJson,
-      platformFeePercentage: feeRow.valueJson,
+      minWithdrawalInr,
+      tdsPercentage,
+      platformFeePercentage,
     };
   }
 
   async loadAndCacheEarningConfig(): Promise<EarningConfig> {
-const [viewsPerRewardRow, rewardAmountPaiseRow, earningsEnabledRow, minWatchDurationRow] =
+    const [viewsPerRewardRow, rewardAmountPaiseRow, earningsEnabledRow, minWatchDurationRow] =
       await Promise.all([
         this.prisma.systemConfig.findUnique({ where: { key: 'VIEWS_PER_REWARD' } }),
         this.prisma.systemConfig.findUnique({ where: { key: 'REWARD_AMOUNT_PAISE' } }),
         this.prisma.systemConfig.findUnique({ where: { key: 'EARNINGS_ENABLED' } }),
         this.prisma.systemConfig.findUnique({ where: { key: 'MIN_WATCH_DURATION_MS' } }),
       ]);
-if (!viewsPerRewardRow || typeof viewsPerRewardRow.valueJson !== 'number') {
-      throw new Error('Platform configuration VIEWS_PER_REWARD is not set. Contact support.');
-    }
-    if (!rewardAmountPaiseRow || typeof rewardAmountPaiseRow.valueJson !== 'number') {
-      throw new Error('Platform configuration REWARD_AMOUNT_PAISE is not set. Contact support.');
-    }
-    if (!earningsEnabledRow || typeof earningsEnabledRow.valueJson !== 'boolean') {
-      throw new Error('Platform configuration EARNINGS_ENABLED is not set. Contact support.');
-    }
-    if (!minWatchDurationRow || typeof minWatchDurationRow.valueJson !== 'number') {
-      throw new Error('Platform configuration MIN_WATCH_DURATION_MS is not set. Contact support.');
-    }
+
+    const viewsPerReward = typeof viewsPerRewardRow?.valueJson === 'number' ? viewsPerRewardRow.valueJson : 200;
+    const rewardAmountPaise = typeof rewardAmountPaiseRow?.valueJson === 'number' ? rewardAmountPaiseRow.valueJson : 100;
+    const earningsEnabled = typeof earningsEnabledRow?.valueJson === 'boolean' ? earningsEnabledRow.valueJson : true;
+    const minWatchDurationMs = typeof minWatchDurationRow?.valueJson === 'number' ? minWatchDurationRow.valueJson : 10000;
+
+    // Auto-seed missing keys
+    if (!viewsPerRewardRow) await this.upsertConfig('VIEWS_PER_REWARD', viewsPerReward);
+    if (!rewardAmountPaiseRow) await this.upsertConfig('REWARD_AMOUNT_PAISE', rewardAmountPaise);
+    if (!earningsEnabledRow) await this.upsertConfig('EARNINGS_ENABLED', earningsEnabled);
+    if (!minWatchDurationRow) await this.upsertConfig('MIN_WATCH_DURATION_MS', minWatchDurationMs);
 
     const config: EarningConfig = {
-      viewsPerReward: viewsPerRewardRow.valueJson,
-      rewardAmountPaise: rewardAmountPaiseRow.valueJson,
-      earningsEnabled: earningsEnabledRow.valueJson,
-      minWatchDurationMs: minWatchDurationRow.valueJson,
+      viewsPerReward,
+      rewardAmountPaise,
+      earningsEnabled,
+      minWatchDurationMs,
     };
 
     await this.redis.set(EARNING_CONFIG_CACHE_KEY, JSON.stringify(config));
